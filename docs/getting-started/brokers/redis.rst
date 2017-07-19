@@ -51,6 +51,13 @@ by adding the ``virtual_host`` parameter to the URL:
 
     redis+socket:///path/to/redis.sock?virtual_host=db_number
 
+It is also easy to connect directly to a list of Redis Sentinel:
+
+.. code-block:: python
+
+    app.conf.broker_url = 'sentinel://localhost:26379;sentinel://localhost:26380;sentinel://localhost:26381'
+    app.conf.broker_transport_options = { 'master_name': "sentinelmaster" }
+
 .. _redis-visibility_timeout:
 
 Visibility Timeout
@@ -78,8 +85,12 @@ you should configure these settings::
 
     app.conf.result_backend = 'redis://localhost:6379/0'
 
+
+
 For a complete list of options supported by the Redis result backend, see
 :ref:`conf-redis-result-backend`
+
+*Note that sentinel is not a supported backend*
 
 .. _redis-caveats:
 
