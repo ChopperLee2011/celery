@@ -216,20 +216,19 @@ class test_DjangoWorkerFixup(FixupCase):
             f._db.connections.all.side_effect = lambda: conns
 
             f._close_database()
-            conns[0].close.assert_called_with()
-            conns[1].close.assert_called_with()
-            conns[2].close.assert_called_with()
+            conns[0].close_if_unusable_or_obsolete.assert_called_with()
+            conns[1].close_if_unusable_or_obsolete.assert_called_with()
+            conns[2].close_if_unusable_or_obsolete.assert_called_with()
 
-            conns[1].close.side_effect = KeyError('omg')
+            conns[1].close_if_unusable_or_obsolete.side_effect = KeyError(
+                'omg')
             with pytest.raises(KeyError):
                 f._close_database()
 
     def test_close_cache(self):
         with self.fixup_context(self.app) as (f, _, _):
             f.close_cache()
-            f._cache.cache.close.assert_called_with()
-            f._cache.cache.close.side_effect = TypeError()
-            f.close_cache()
+            f._cache.close_caches.assert_called_with()
 
     def test_on_worker_ready(self):
         with self.fixup_context(self.app) as (f, _, _):

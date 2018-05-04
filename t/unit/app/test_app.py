@@ -36,7 +36,7 @@ class ObjectConfig(object):
 
 
 object_config = ObjectConfig()
-dict_config = dict(FOO=10, BAR=20)
+dict_config = {'FOO': 10, 'BAR': 20}
 
 
 class ObjectConfig2(object):
@@ -79,10 +79,10 @@ class test_App:
         tz_utc = timezone.get_timezone('UTC')
         tz_us_eastern = timezone.get_timezone(timezone_setting_value)
 
-        now = datetime.utcnow().replace(tzinfo=tz_utc)
+        now = to_utc(datetime.utcnow())
         app_now = self.app.now()
 
-        assert app_now.tzinfo == tz_utc
+        assert app_now.tzinfo is tz_utc
         assert app_now - now <= timedelta(seconds=1)
 
         # Check that timezone conversion is applied from configuration
@@ -92,7 +92,8 @@ class test_App:
         del self.app.timezone
 
         app_now = self.app.now()
-        assert app_now.tzinfo == tz_us_eastern
+
+        assert app_now.tzinfo.zone == tz_us_eastern.zone
 
         diff = to_utc(datetime.utcnow()) - localize(app_now, tz_utc)
         assert diff <= timedelta(seconds=1)
@@ -102,7 +103,7 @@ class test_App:
         del self.app.timezone
         app_now = self.app.now()
         assert self.app.timezone == tz_us_eastern
-        assert app_now.tzinfo == tz_us_eastern
+        assert app_now.tzinfo.zone == tz_us_eastern.zone
 
     @patch('celery.app.base.set_default_app')
     def test_set_default(self, set_default_app):
@@ -536,8 +537,8 @@ class test_App:
             _task_stack.pop()
 
     def test_pickle_app(self):
-        changes = dict(THE_FOO_BAR='bars',
-                       THE_MII_MAR='jars')
+        changes = {'THE_FOO_BAR': 'bars',
+                   'THE_MII_MAR': 'jars'}
         self.app.conf.update(changes)
         saved = pickle.dumps(self.app)
         assert len(saved) < 2048
@@ -785,6 +786,20 @@ class test_App:
         self.app.conf.broker_failover_strategy = my_failover_strategy
         assert self.app.connection('amqp:////value') \
                        .failover_strategy == my_failover_strategy
+
+    def test_amqp_heartbeat_settings(self):
+        # Test default broker_heartbeat value
+        assert self.app.connection('amqp:////value') \
+                   .heartbeat == 0
+
+        # Test passing heartbeat through app configuration
+        self.app.conf.broker_heartbeat = 60
+        assert self.app.connection('amqp:////value') \
+                   .heartbeat == 60
+
+        # Test passing heartbeat as connection argument
+        assert self.app.connection('amqp:////value', heartbeat=30) \
+                   .heartbeat == 30
 
     def test_after_fork(self):
         self.app._pool = Mock()

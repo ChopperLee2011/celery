@@ -26,7 +26,7 @@ from .annotations import resolve_all as resolve_all_annotations
 from .registry import _unpickle_task_v2
 from .utils import appstr
 
-__all__ = ['Context', 'Task']
+__all__ = ('Context', 'Task')
 
 #: extracts attributes related to publishing a message from an object.
 extract_exec_options = mattrgetter(
@@ -132,7 +132,7 @@ class Context(object):
 
     @property
     def children(self):
-        # children must be an empy list for every thread
+        # children must be an empty list for every thread
         if self._children is None:
             self._children = []
         return self._children
@@ -157,6 +157,9 @@ class Task(object):
 
     #: Execution strategy used, or the qualified name of one.
     Strategy = 'celery.worker.strategy:default'
+
+    #: Request class used, or the qualified name of one.
+    Request = 'celery.worker.request:Request'
 
     #: This is the instance bound to if the task is a method of a class.
     __self__ = None
@@ -383,7 +386,7 @@ class Task(object):
             _task_stack.pop()
 
     def __reduce__(self):
-        # - tasks are pickled into the name of the task only, and the reciever
+        # - tasks are pickled into the name of the task only, and the receiver
         # - simply grabs it from the local registry.
         # - in later versions the module of the task is also included,
         # - and the receiving side tries to import that module so that
@@ -496,7 +499,7 @@ class Task(object):
             headers (Dict): Message headers to be included in the message.
 
         Returns:
-            ~@AsyncResult: Promise of future evaluation.
+            celery.result.AsyncResult: Promise of future evaluation.
 
         Raises:
             TypeError: If not enough arguments are passed, or too many
@@ -616,7 +619,7 @@ class Task(object):
                 If no exception was raised it will raise the ``exc``
                 argument provided.
             countdown (float): Time in seconds to delay the retry for.
-            eta (~datetime.dateime): Explicit time and date to run the
+            eta (~datetime.datetime): Explicit time and date to run the
                 retry at.
             max_retries (int): If set, overrides the default retry limit for
                 this execution.  Changes to this parameter don't propagate to

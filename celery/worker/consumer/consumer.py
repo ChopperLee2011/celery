@@ -39,7 +39,7 @@ from celery.worker.state import (
     task_reserved, maybe_shutdown, reserved_requests,
 )
 
-__all__ = ['Consumer', 'Evloop', 'dump_body']
+__all__ = ('Consumer', 'Evloop', 'dump_body')
 
 CLOSE = bootsteps.CLOSE
 TERMINATE = bootsteps.TERMINATE
@@ -301,6 +301,12 @@ class Consumer(object):
         )
 
     def _limit_task(self, request, bucket, tokens):
+        if bucket.contents:
+            return bucket.add(request)
+        return self._schedule_bucket_request(request, bucket, tokens)
+
+    def _limit_post_eta(self, request, bucket, tokens):
+        self.qos.decrement_eventually()
         if bucket.contents:
             return bucket.add(request)
         return self._schedule_bucket_request(request, bucket, tokens)
